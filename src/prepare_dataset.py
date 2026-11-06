@@ -1,21 +1,15 @@
 from datasets import load_from_disk
+from project_paths import RAW_DATASET_PATH, PROCESSED_DATASET_PATH
+from label_config import LABEL_LIST
 
 # Load the original dataset
-dataset = load_from_disk("data/raw/conll2003")
+dataset = load_from_disk(str(RAW_DATASET_PATH))
 
 # Get the original NER label names
 original_label_names = dataset["train"].features["ner_tags"].feature.names
 
-# Define the new label mapping
-new_label_names = [
-    "O",
-    "B-PER",
-    "I-PER",
-    "B-ORG",
-    "I-ORG",
-    "B-LOC",
-    "I-LOC"
-]
+# Use the centralized project label list
+new_label_names = LABEL_LIST
 
 # Create a mapping from original labels to new labels
 label_mapping = {}
@@ -46,7 +40,7 @@ def transform_labels(example):
 processed_dataset = dataset.map(transform_labels)
 
 # Save the processed dataset
-processed_dataset.save_to_disk("data/processed/conll2003_3class")
+processed_dataset.save_to_disk(str(PROCESSED_DATASET_PATH))
 
 # Display the processed dataset
 print(processed_dataset)
