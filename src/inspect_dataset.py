@@ -1,8 +1,9 @@
 from datasets import load_from_disk
 from collections import Counter
+from project_paths import RAW_DATASET_PATH
 
 # Load the downloaded dataset
-dataset = load_from_disk("data/raw/conll2003")
+dataset = load_from_disk(str(RAW_DATASET_PATH))
 
 # Get the NER label names
 label_names = dataset["train"].features["ner_tags"].feature.names
