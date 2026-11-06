@@ -1,4 +1,8 @@
 from datasets import load_from_disk
+try:
+    from project_paths import PROCESSED_DATASET_PATH, REQUIRED_SPLITS
+except ModuleNotFoundError:
+    from src.project_paths import PROCESSED_DATASET_PATH, REQUIRED_SPLITS
 
 def load_ner_dataset():
     """
@@ -8,9 +12,13 @@ def load_ner_dataset():
         DatasetDict: Contains train, validation, and test splits.
     """
 
-    dataset_path = "data/processed/conll2003_3class"
+    if not PROCESSED_DATASET_PATH.exists():
+        raise FileNotFoundError(
+            f"Processed dataset not found at: {PROCESSED_DATASET_PATH}. "
+            "Please run 'python src/prepare_dataset.py' first."
+        )
 
-    dataset = load_from_disk(dataset_path)
+    dataset = load_from_disk(str(PROCESSED_DATASET_PATH))
 
     return dataset
 
@@ -27,7 +35,7 @@ if __name__ == "__main__":
     # Display split sizes
     print("\nDataset Split Sizes:\n")
 
-    for split in ["train", "validation", "test"]:
+    for split in REQUIRED_SPLITS:
 
         print(f"{split.capitalize()}: {len(dataset[split])} samples")
 
