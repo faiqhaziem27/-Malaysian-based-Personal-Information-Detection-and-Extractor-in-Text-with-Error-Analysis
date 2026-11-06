@@ -22,7 +22,8 @@ def tokenize_and_align_labels(examples, tokenizer):
     tokenized_inputs = tokenizer(
         examples["tokens"],
         truncation=True,
-        is_split_into_words=True
+        is_split_into_words=True,
+        return_token_type_ids=False
     )
 
     aligned_labels = []
