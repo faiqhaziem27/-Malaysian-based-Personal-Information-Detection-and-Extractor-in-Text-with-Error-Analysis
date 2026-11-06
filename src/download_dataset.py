@@ -1,13 +1,10 @@
-from pathlib import Path
 from datasets import load_dataset
+from project_paths import RAW_DATASET_PATH
 
 
 def main():
-    # Define the project root directory
-    project_root = Path(__file__).resolve().parent.parent
-
-    # Define the raw dataset storage path
-    raw_data_path = project_root / "data" / "raw" / "conll2003"
+    # Use the centralized raw dataset path
+    raw_data_path = RAW_DATASET_PATH
 
     # Skip download if the raw dataset already exists
     if raw_data_path.exists():
