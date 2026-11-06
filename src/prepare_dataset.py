@@ -1,4 +1,4 @@
-from datasets import load_from_disk
+from datasets import ClassLabel, Sequence, load_from_disk
 from project_paths import RAW_DATASET_PATH, PROCESSED_DATASET_PATH
 from label_config import LABEL_LIST
 
@@ -38,6 +38,13 @@ def transform_labels(example):
 
 # Apply the transformation to all dataset splits
 processed_dataset = dataset.map(transform_labels)
+
+# Cast the new label column to Sequence(ClassLabel) to store label metadata
+ner_3class_feature = Sequence(ClassLabel(names=new_label_names))
+processed_dataset = processed_dataset.cast_column(
+    "ner_tags_3class",
+    ner_3class_feature
+)
 
 # Save the processed dataset
 processed_dataset.save_to_disk(str(PROCESSED_DATASET_PATH))
