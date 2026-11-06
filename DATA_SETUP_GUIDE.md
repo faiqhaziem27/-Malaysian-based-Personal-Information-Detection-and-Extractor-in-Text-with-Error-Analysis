@@ -58,7 +58,7 @@ python src/prepare_dataset.py
 **Meaning:** Processes the raw dataset and converts the original NER labels into our project's three target entity categories: Person, Organization, and Location.
 
 **Output location:**
-`data/processed/conll2003/`
+`data/processed/conll2003_3class/`
 
 ## Step 7: Load and Verify the Dataset
 
