@@ -9,6 +9,12 @@ def main():
     # Define the raw dataset storage path
     raw_data_path = project_root / "data" / "raw" / "conll2003"
 
+    # Skip download if the raw dataset already exists
+    if raw_data_path.exists():
+        print(f"Raw dataset already exists at: {raw_data_path}")
+        print("Skipping download. Delete the folder to re-download.")
+        return
+
     # Download CoNLL-2003 dataset
     print("Downloading CoNLL-2003 dataset...")
 
