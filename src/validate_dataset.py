@@ -1,22 +1,16 @@
 from datasets import load_from_disk
 from collections import Counter
+from project_paths import RAW_DATASET_PATH, PROCESSED_DATASET_PATH, REQUIRED_SPLITS
+from label_config import LABEL_LIST
 
 # Load original and processed datasets
-original_dataset = load_from_disk("data/raw/conll2003")
-processed_dataset = load_from_disk("data/processed/conll2003_3class")
+original_dataset = load_from_disk(str(RAW_DATASET_PATH))
+processed_dataset = load_from_disk(str(PROCESSED_DATASET_PATH))
 
 # Get original and new label names
 original_labels = original_dataset["train"].features["ner_tags"].feature.names
 
-new_labels = [
-    "O",
-    "B-PER",
-    "I-PER",
-    "B-ORG",
-    "I-ORG",
-    "B-LOC",
-    "I-LOC"
-]
+new_labels = LABEL_LIST
 
 # Count labels in the processed training dataset
 label_counter = Counter()
@@ -38,7 +32,7 @@ for label_name, count in label_counter.most_common():
 # Check dataset sizes
 print("\nDataset Size Verification:\n")
 
-for split in ["train", "validation", "test"]:
+for split in REQUIRED_SPLITS:
 
     original_size = len(original_dataset[split])
     processed_size = len(processed_dataset[split])
@@ -52,6 +46,26 @@ for split in ["train", "validation", "test"]:
     assert original_size == processed_size, (
         f"Dataset size mismatch in {split}"
     )
+
+    # Verify token-label alignment and label mapping for all samples
+    for index, (orig_sample, proc_sample) in enumerate(
+        zip(original_dataset[split], processed_dataset[split])
+    ):
+        assert len(proc_sample["tokens"]) == len(proc_sample["ner_tags_3class"]), (
+            f"Token-label length mismatch in {split} at sample {index}"
+        )
+
+        for orig_id, proc_id in zip(
+            orig_sample["ner_tags"], proc_sample["ner_tags_3class"]
+        ):
+            orig_label = original_labels[orig_id]
+            proc_label = new_labels[proc_id]
+            expected_label = orig_label if orig_label in new_labels else "O"
+
+            assert proc_label == expected_label, (
+                f"Invalid label mapping in {split} at sample {index}: "
+                f"{orig_label} -> {proc_label} (expected {expected_label})"
+            )
 
 print("\nDataset validation completed successfully!")
 
