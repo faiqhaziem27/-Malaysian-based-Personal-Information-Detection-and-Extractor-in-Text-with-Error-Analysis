@@ -2,9 +2,11 @@
 __pycache__/
 *.py[cod]
 
-# Virtual environments
+# Virtual environments and secrets
 venv/
+.venv/
 .env/
+.env
 
 # Raw datasets
 data/raw/
@@ -21,3 +23,13 @@ logs/
 
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Training logs
+runs/
+wandb/
