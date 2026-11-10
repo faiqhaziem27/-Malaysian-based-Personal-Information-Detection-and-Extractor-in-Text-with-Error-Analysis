@@ -1,23 +1,12 @@
-# from .model_config import ModelConfig
-
-# from src.tokenize_dataset import load_tokenized_dataset
-
-# Defaults to "distilbert-base-cased", or pass any other model name we choose
-# # tokenized_dataset, tokenizer = load_tokenized_dataset(config.pretrained_model_name)
-
-# train_dataset = tokenized_dataset["train"]
-# validation_dataset = tokenized_dataset["validation"]
-# test_dataset = tokenized_dataset["test"]
-
-##############
-
 """
 Fine-tune a token classification model for NER.
 
-Run from the project root:
-    python -m train
+Run based on the given command:
+    python -m model.train <run_name>
 """
 
+# import necessary libraries
+import sys
 import numpy as np
 import torch
 from seqeval.metrics import accuracy_score, f1_score, precision_score, recall_score
@@ -28,11 +17,15 @@ from transformers import (
     set_seed,
 )
 
+# import from local modules
 from model.create_model import create_model
 from model.model_config import ModelConfig
 from src.tokenize_dataset import IGNORE_LABEL_ID, load_tokenized_dataset
 
 SEED = 42
+
+# Get the run name from command line arguments, default to "run" if not provided
+RUN_NAME = sys.argv[1] if len(sys.argv) > 1 else "run"
 
 
 def build_compute_metrics(id2label):
@@ -119,17 +112,20 @@ def main():
 
     trainer.train()
 
+    # Evaluate on validation and test sets
     print("\nValidation results:")
     print(trainer.evaluate(tokenized_dataset["validation"]))
 
     print("\nTest results:")
     print(trainer.predict(tokenized_dataset["test"]).metrics)
 
-    final_dir = config.output_dir / "final"
+    # saving the best model and tokenizer to the output directory
+    final_dir = config.output_dir / RUN_NAME
+    if final_dir.exists():
+      raise SystemExit(f"'{final_dir}' already exists. Pick a new run name.") # double check to avoid overwriting previous runs
     trainer.save_model(str(final_dir))
     tokenizer.save_pretrained(str(final_dir))
     print(f"\nSaved best model and tokenizer to {final_dir}")
-
 
 if __name__ == "__main__":
     main()
