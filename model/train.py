@@ -6,7 +6,10 @@ Run based on the given command:
 """
 
 # import necessary libraries
+import json
 import sys
+from datetime import datetime
+
 import numpy as np
 import torch
 from seqeval.metrics import accuracy_score, f1_score, precision_score, recall_score
@@ -29,7 +32,7 @@ RUN_NAME = sys.argv[1] if len(sys.argv) > 1 else "run"
 
 
 def build_compute_metrics(id2label):
-    """Return a compute_metrics function that ignores -100 positions."""
+    # Return a compute_metrics function that ignores -100 positions.
 
     def compute_metrics(eval_prediction):
         logits, labels = eval_prediction
@@ -58,10 +61,19 @@ def build_compute_metrics(id2label):
 
     return compute_metrics
 
+def to_plain_dict(metrics):
+    # Convert metric values (possibly numpy types) to plain Python floats.
+    return {key: float(value) for key, value in metrics.items()}
+
 
 def main():
     set_seed(SEED)
     config = ModelConfig()
+
+    # Check if the output directory for this run already exists
+    final_dir = config.output_dir / RUN_NAME
+    if final_dir.exists():
+        raise SystemExit(f"'{final_dir}' already exists. Pick a new run name.") # double check to avoid overwriting previous runs
 
     # Tokenizer and model must come from the same checkpoint
     tokenized_dataset, tokenizer = load_tokenized_dataset(config.pretrained_model_name)
@@ -113,19 +125,43 @@ def main():
     trainer.train()
 
     # Evaluate on validation and test sets
+    validation_metrics = trainer.evaluate(tokenized_dataset["validation"])
     print("\nValidation results:")
-    print(trainer.evaluate(tokenized_dataset["validation"]))
+    print(validation_metrics)
 
+    test_metrics = trainer.predict(tokenized_dataset["test"]).metrics
     print("\nTest results:")
-    print(trainer.predict(tokenized_dataset["test"]).metrics)
+    print(test_metrics)
 
-    # saving the best model and tokenizer to the output directory
-    final_dir = config.output_dir / RUN_NAME
-    if final_dir.exists():
-      raise SystemExit(f"'{final_dir}' already exists. Pick a new run name.") # double check to avoid overwriting previous runs
     trainer.save_model(str(final_dir))
     tokenizer.save_pretrained(str(final_dir))
+ 
+    # Record what this run was, next to the model
+    run_info = {
+        "run_name": RUN_NAME,
+        "date": datetime.now().isoformat(timespec="seconds"),
+        "base_model": config.pretrained_model_name,
+        "labels": config.id2label,
+        "num_labels": config.num_labels,
+        "dataset_sizes": {
+            split: len(tokenized_dataset[split]) for split in tokenized_dataset
+        },
+        "hyperparameters": {
+            "batch_size": config.batch_size,
+            "learning_rate": config.learning_rate,
+            "epochs": config.epochs,
+            "weight_decay": config.weight_decay,
+            "seed": SEED,
+        },
+        "validation_metrics": to_plain_dict(validation_metrics),
+        "test_metrics": to_plain_dict(test_metrics),
+    }
+
+    metrics_path = final_dir / "run_info.json"
+    with open(metrics_path, "w", encoding="utf-8") as f:
+        json.dump(run_info, f, indent=2)
     print(f"\nSaved best model and tokenizer to {final_dir}")
+    print(f"Saved run info to {metrics_path}")
 
 if __name__ == "__main__":
     main()
