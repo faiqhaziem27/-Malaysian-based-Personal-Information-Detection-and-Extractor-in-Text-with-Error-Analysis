@@ -33,3 +33,6 @@ Thumbs.db
 # Training logs
 runs/
 wandb/
+
+# evaluation results
+eval_results/
