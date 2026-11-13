@@ -69,14 +69,33 @@ test_dataset = tokenized_dataset["test"]
 
 ## 6. Verification
 
-Run from the project root to verify alignment across all splits:
+Run from the project root:
 
 ```bash
 python src/tokenize_dataset.py
+python src/validate_tokenization.py
 ```
 
-Expected verification counts:
+- `tokenize_dataset.py`: Quick check of lengths and label IDs, and prints one sample alignment table.
+- `validate_tokenization.py`: Full validation that compares tokenized labels against the original word-level labels.
 
-- `train`: 14,041 samples
-- `validation`: 3,250 samples
-- `test`: 3,453 samples
+### Validation Checks (`validate_tokenization.py`)
+
+| Check | Description |
+|---|---|
+| Length | `input_ids`, `attention_mask` and `labels` have the same length |
+| Attention mask | All values are `1` (no padding before batching) |
+| Special tokens | Sequence starts with `[CLS]` and ends with `[SEP]`, both labeled `-100` |
+| Label alignment | After removing `-100`, the remaining labels exactly match `ner_tags_3class` |
+
+### Validation Results (`distilbert-base-cased`)
+
+| Split | Samples | Max Tokens |
+|---|---:|---:|
+| Train | 14,041 | 173 |
+| Validation | 3,250 | 151 |
+| Test | 3,453 | 148 |
+
+The longest training sequence is 173 tokens, well below the 512-token limit of DistilBERT. No CoNLL-2003 sample is truncated during training.
+
+Long input documents (e.g., reports longer than 512 tokens) only need to be handled at prediction time.
