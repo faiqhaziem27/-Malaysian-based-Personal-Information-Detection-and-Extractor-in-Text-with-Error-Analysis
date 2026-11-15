@@ -1,5 +1,6 @@
 """
-Fine-tune a token classification model for NER.
+Fine-tune a token classification model for NER on the English (CoNLL-2003)
+and Malay datasets together.
 
 Run based on the given command:
     python -m model.train <run_name>
@@ -12,6 +13,7 @@ from datetime import datetime
 
 import numpy as np
 import torch
+from datasets import concatenate_datasets
 from seqeval.metrics import accuracy_score, f1_score, precision_score, recall_score
 from transformers import (
     DataCollatorForTokenClassification,
@@ -23,9 +25,16 @@ from transformers import (
 # import from local modules
 from model.create_model import create_model
 from model.model_config import ModelConfig
+from src.load_malaysia_dataset import load_tokenized_malaysia_dataset
 from src.tokenize_dataset import IGNORE_LABEL_ID, load_tokenized_dataset
 
 SEED = 42
+
+# Repeat the Malay training data this many times (1 = no oversampling).
+# Raise it if the Malay set is much smaller than CoNLL and gets drowned out.
+OVERSAMPLE_MALAY = 1
+
+MODEL_COLUMNS = ["input_ids", "attention_mask", "labels"]
 
 # Get the run name from command line arguments, default to "run" if not provided
 RUN_NAME = sys.argv[1] if len(sys.argv) > 1 else "run"
@@ -61,34 +70,74 @@ def build_compute_metrics(id2label):
 
     return compute_metrics
 
+
 def to_plain_dict(metrics):
     # Convert metric values (possibly numpy types) to plain Python floats.
     return {key: float(value) for key, value in metrics.items()}
+
+
+def check_label_range(dataset, name, num_labels):
+    # Every label must be -100 or a valid label ID, or training will break.
+    for labels in dataset["labels"]:
+        for label_id in labels:
+            if label_id != IGNORE_LABEL_ID and not 0 <= label_id < num_labels:
+                raise ValueError(
+                    f"Invalid label ID {label_id} in {name} (expected 0-{num_labels - 1})"
+                )
 
 
 def main():
     set_seed(SEED)
     config = ModelConfig()
 
-    # Check if the output directory for this run already exists
+    # Fail fast: stop now if this run name is already taken
     final_dir = config.output_dir / RUN_NAME
     if final_dir.exists():
-        raise SystemExit(f"'{final_dir}' already exists. Pick a new run name.") # double check to avoid overwriting previous runs
+        raise SystemExit(f"'{final_dir}' already exists. Pick a new run name.")
 
-    # Tokenizer and model must come from the same checkpoint
-    tokenized_dataset, tokenizer = load_tokenized_dataset(config.pretrained_model_name)
+    # Both datasets must be tokenized with the model's own checkpoint
+    english, english_tokenizer = load_tokenized_dataset(config.pretrained_model_name)
+    malay, malay_tokenizer = load_tokenized_malaysia_dataset(config.pretrained_model_name)
+    tokenizer = english_tokenizer
     model = create_model(config)
 
-    if tokenizer.name_or_path != config.pretrained_model_name:
-        raise ValueError(
-            f"Tokenizer '{tokenizer.name_or_path}' != model '{config.pretrained_model_name}'"
-        )
+    for name, tok in [("English", english_tokenizer), ("Malay", malay_tokenizer)]:
+        if tok.name_or_path != config.pretrained_model_name:
+            raise ValueError(
+                f"{name} tokenizer '{tok.name_or_path}' != model "
+                f"'{config.pretrained_model_name}'. Check that its loader "
+                "accepts the checkpoint name."
+            )
+    if english_tokenizer.get_vocab() != malay_tokenizer.get_vocab():
+        raise ValueError("English and Malay tokenizers have different vocabularies")
     if len(tokenizer) > model.config.vocab_size:
         raise ValueError(
             f"Tokenizer vocab ({len(tokenizer)}) exceeds model vocab ({model.config.vocab_size})"
         )
     if model.config.num_labels != len(config.label2id):
         raise ValueError("Model num_labels does not match label2id")
+
+    # Same columns and types, so the two datasets can be concatenated
+    english = {split: english[split].select_columns(MODEL_COLUMNS) for split in english}
+    malay = {split: malay[split].select_columns(MODEL_COLUMNS) for split in malay}
+    for split in malay:
+        malay[split] = malay[split].cast(english[split].features)
+
+    for dataset_name, splits in [("english", english), ("malay", malay)]:
+        for split in ("train", "validation"):
+            check_label_range(splits[split], f"{dataset_name} {split}", config.num_labels)
+
+    # Train on both together; validate on both together for checkpoint selection
+    train_dataset = concatenate_datasets(
+        [english["train"]] + [malay["train"]] * OVERSAMPLE_MALAY
+    ).shuffle(seed=SEED)
+    validation_dataset = concatenate_datasets(
+        [english["validation"], malay["validation"]]
+    )
+    print(
+        f"Training on {len(train_dataset)} sentences "
+        f"({len(english['train'])} English + {len(malay['train'])} Malay x {OVERSAMPLE_MALAY})"
+    )
 
     # Pads input_ids / attention_mask and pads labels with -100
     data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
@@ -115,8 +164,8 @@ def main():
     trainer = Trainer(
         model=model,
         args=training_args,
-        train_dataset=tokenized_dataset["train"],
-        eval_dataset=tokenized_dataset["validation"],
+        train_dataset=train_dataset,
+        eval_dataset=validation_dataset,
         data_collator=data_collator,
         processing_class=tokenizer,  # use tokenizer=tokenizer on older transformers
         compute_metrics=build_compute_metrics(config.id2label),
@@ -124,18 +173,28 @@ def main():
 
     trainer.train()
 
-    # Evaluate on validation and test sets
-    validation_metrics = trainer.evaluate(tokenized_dataset["validation"])
-    print("\nValidation results:")
+    # Combined validation score (the one used to pick the best checkpoint)
+    validation_metrics = trainer.evaluate(validation_dataset)
+    print("\nCombined validation results:")
     print(validation_metrics)
 
-    test_metrics = trainer.predict(tokenized_dataset["test"]).metrics
-    print("\nTest results:")
-    print(test_metrics)
+    # Score each dataset separately so one cannot hide the other
+    evaluation_sets = {
+        "english_validation": english["validation"],
+        "english_test": english["test"],
+        "malay_validation": malay["validation"],
+        "malay_test": malay["test"],
+    }
+    per_dataset_metrics = {}
+    for set_name, dataset in evaluation_sets.items():
+        metrics = trainer.predict(dataset, metric_key_prefix=set_name).metrics
+        per_dataset_metrics[set_name] = to_plain_dict(metrics)
+        print(f"\n{set_name}:")
+        print(metrics)
 
     trainer.save_model(str(final_dir))
     tokenizer.save_pretrained(str(final_dir))
- 
+
     # Record what this run was, next to the model
     run_info = {
         "run_name": RUN_NAME,
@@ -144,7 +203,10 @@ def main():
         "labels": config.id2label,
         "num_labels": config.num_labels,
         "dataset_sizes": {
-            split: len(tokenized_dataset[split]) for split in tokenized_dataset
+            "english": {split: len(english[split]) for split in english},
+            "malay": {split: len(malay[split]) for split in malay},
+            "combined_train": len(train_dataset),
+            "oversample_malay": OVERSAMPLE_MALAY,
         },
         "hyperparameters": {
             "batch_size": config.batch_size,
@@ -153,8 +215,8 @@ def main():
             "weight_decay": config.weight_decay,
             "seed": SEED,
         },
-        "validation_metrics": to_plain_dict(validation_metrics),
-        "test_metrics": to_plain_dict(test_metrics),
+        "combined_validation_metrics": to_plain_dict(validation_metrics),
+        "per_dataset_metrics": per_dataset_metrics,
     }
 
     metrics_path = final_dir / "run_info.json"
@@ -162,6 +224,7 @@ def main():
         json.dump(run_info, f, indent=2)
     print(f"\nSaved best model and tokenizer to {final_dir}")
     print(f"Saved run info to {metrics_path}")
+
 
 if __name__ == "__main__":
     main()
