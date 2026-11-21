@@ -116,7 +116,7 @@ There are multiple training scripts with their dedicated purpose:
 
 - As models\checkpoints\run is ignored in .gitignore, manually move **generate_table.py** to the installed model folder with the following command:
 ```bash
-mv model/generate_table.py models/checkpoint/run/
+python -m model.generate_table <run_name>
 ```
 
 - To run the script:

@@ -8,8 +8,8 @@ from src.label_config import LABEL2ID, ID2LABEL, NUM_LABELS
 class ModelConfig:
 
     # Model settings
-    pretrained_model_name: str = "distilbert-base-multilingual-cased"
-    max_length: int = 128
+    pretrained_model_name: str = "VeeJack/malaysian-ner-distilbert"
+    max_length: int = 512
 
     # Label settings
     num_labels: int = NUM_LABELS

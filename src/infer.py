@@ -17,7 +17,7 @@ from functools import lru_cache
 import torch
 from transformers import pipeline
 
-DEFAULT_MODEL_DIR = "models/checkpoints/run"
+DEFAULT_MODEL_DIR = "VeeJack/malaysian-ner-distilbert"
 
 
 def get_model_dir(model_dir=None):
@@ -32,8 +32,7 @@ def load_ner_pipeline(model_dir=None):
 
     if not os.path.isdir(resolved):
         raise FileNotFoundError(
-            f"Model folder '{resolved}' not found. Unzip the model there or "
-            "set NER_MODEL_DIR."
+            f"Model folder '{resolved}' is a local folder, loading it from the Hugging Face Hub..."
         )
 
     return pipeline(
