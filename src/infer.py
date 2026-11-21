@@ -103,11 +103,45 @@ def print_table(entities):
         print(f"{e['entity']:<{width}} | {e['type']:<4} | {e['score']:<5} | {span}")
 
 
+def redact_text(text, entities, placeholder="[{type}]", min_score=0.0, style="mask"):
+    """
+    Redact the text by replacing each entity with a placeholder.
+
+    The placeholder can include {type} and {score} fields. For example:
+        "REDACTED" -> "REDACTED"
+        "{type}" -> "PER"
+        "{type}:{score:.2f}" -> "PER:0.95"
+
+    Entities are replaced in reverse order so that earlier replacements don't
+    change the character offsets of later ones.
+    """
+    redacted = text
+    for entity in sorted(entities, key=lambda e: e["start"], reverse=True):
+        if entity["score"] < min_score:
+            continue
+        if style == "label":
+            replacement = placeholder.format(type=entity["type"], score=entity["score"])
+        elif style == "mask":
+            replacement = "█" * (entity["end"] - entity["start"])
+        else:
+            raise ValueError(f"Unknown style: {style}")
+        redacted = (
+            redacted[: entity["start"]] + replacement + redacted[entity["end"] :]
+        )
+    return redacted
+
+
 def main():
     parser = argparse.ArgumentParser(description="Run NER on text.")
     parser.add_argument("text", nargs="?", help="Text to analyse")
     parser.add_argument("--file", help="Path to a UTF-8 text file")
     parser.add_argument("--model", help="Path to the model folder")
+
+    # argument for redaction
+    parser.add_argument("--redact", action="store_true", help="Print the text with entities replaced instead of a table")
+    parser.add_argument("--style", choices=["label", "mask"], default="label", help="label: [PER]   mask: ********")
+    parser.add_argument("--placeholder", default="[{type}]", help="Label format using {type} and {score}")
+    parser.add_argument("--min-score", type=float, default=0.0, help="Only redact entities at or above this confidence")    
     args = parser.parse_args()
 
     if args.file:
@@ -118,8 +152,11 @@ def main():
     else:
         parser.error("Provide text or --file.")
 
-    print_table(predict(text, args.model))
-
+    entities = print_table(predict(text, args.model))
+    if args.redact:
+        print(redact_text(text, entities, args.placeholder, args.min_score, args.style))
+    else:
+        print_table(entities)
 
 if __name__ == "__main__":
     main()
