@@ -9,7 +9,7 @@ except ModuleNotFoundError:
     from src.project_paths import REQUIRED_SPLITS
 
 # Default pre-trained model checkpoint for tokenization
-DEFAULT_MODEL_CHECKPOINT = "distilbert-base-cased"
+DEFAULT_MODEL_CHECKPOINT = "distilbert-base-multilingual-cased"
 
 # Label ID ignored by PyTorch CrossEntropyLoss during training
 IGNORE_LABEL_ID = -100
