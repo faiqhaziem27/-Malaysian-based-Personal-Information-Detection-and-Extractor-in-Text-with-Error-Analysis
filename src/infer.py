@@ -18,6 +18,7 @@ import torch
 from transformers import pipeline
 
 DEFAULT_MODEL_DIR = "VeeJack/malaysian-ner-distilbert"
+DEFAULT_PLACEHOLDER = "[{type}]"
 
 
 def get_model_dir(model_dir=None):
