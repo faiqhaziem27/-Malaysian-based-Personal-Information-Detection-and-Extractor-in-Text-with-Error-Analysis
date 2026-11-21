@@ -84,7 +84,7 @@ from transformers import pipeline
 ner = pipeline(
     "token-classification",
     model="models/checkpoints/<run_name>",
-    aggregation_strategy="simple",
+    aggregation_strategy="first",
 )
 
 for entity in ner("Ahmad bin Ali works at Petronas in Kuala Lumpur."):

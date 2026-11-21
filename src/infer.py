@@ -43,7 +43,7 @@ def load_ner_pipeline(model_dir=None):
     return pipeline(
         "token-classification",
         model=resolved,
-        aggregation_strategy="simple",
+        aggregation_strategy="first",
         device=0 if torch.cuda.is_available() else -1,
     )
 
