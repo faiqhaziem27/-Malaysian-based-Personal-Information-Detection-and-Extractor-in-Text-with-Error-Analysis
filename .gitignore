@@ -36,3 +36,6 @@ wandb/
 
 # evaluation results
 eval_results/
+
+# path to api development
+api/
