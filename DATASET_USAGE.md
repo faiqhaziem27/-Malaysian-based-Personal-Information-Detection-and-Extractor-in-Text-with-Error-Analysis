@@ -70,11 +70,12 @@ Do not redefine the label mapping independently.
 
 ## 7. Important Note: Tokenization
 
-The dataset currently contains word-level tokens
+The dataset on disk contains word-level tokens
 and word-level NER labels.
 
-The Model Engineer must align these labels with
-the selected model tokenizer before fine-tuning.
+Before fine-tuning, use `src/tokenize_dataset.py`
+to dynamically tokenize inputs and align subword labels.
+See `TOKENIZATION_GUIDE.md` for details.
 
 Do not assume that one word corresponds to
 exactly one model token.
