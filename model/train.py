@@ -32,7 +32,7 @@ SEED = 42
 
 # Repeat the Malay training data this many times (1 = no oversampling).
 # Raise it if the Malay set is much smaller than CoNLL and gets drowned out.
-OVERSAMPLE_MALAY = 1
+OVERSAMPLE_MALAY = 10
 
 MODEL_COLUMNS = ["input_ids", "attention_mask", "labels"]
 

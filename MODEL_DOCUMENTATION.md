@@ -75,16 +75,20 @@ models/checkpoints/<run_name>/
 
 The model file is several hundred MB. If the zip was created from `models/checkpoints/<run_name>`, extracting it at the project root recreates this path. The folder you point the code at must be the one that has `config.json` directly inside it.
 
+**Alternatively, you can also install our latest model in the Hugging Face Hub by referencing the model's repository:"**
+- Model: "VeeJack/malaysian-ner-repository"
+
+
 ### Checking that the model loads
-Run this from the project root, replacing `<run_name>` with your folder name:
+Run this from the project root, if you want to run the model on a local folder, you can change it from [model="<model_name>"]:
 
 ```python
 from transformers import pipeline
 
 ner = pipeline(
     "token-classification",
-    model="models/checkpoints/<run_name>",
-    aggregation_strategy="simple",
+    model="VeeJack/malaysian-ner-distilbert",
+    aggregation_strategy="first",
 )
 
 for entity in ner("Ahmad bin Ali works at Petronas in Kuala Lumpur."):
@@ -116,7 +120,7 @@ There are multiple training scripts with their dedicated purpose:
 
 - As models\checkpoints\run is ignored in .gitignore, manually move **generate_table.py** to the installed model folder with the following command:
 ```bash
-mv model/generate_table.py models/checkpoint/run/
+python -m model.generate_table <run_name>
 ```
 
 - To run the script:
