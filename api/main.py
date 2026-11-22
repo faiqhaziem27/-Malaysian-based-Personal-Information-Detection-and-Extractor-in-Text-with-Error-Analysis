@@ -20,6 +20,7 @@ from contextlib import asynccontextmanager
 from typing import Literal
 
 from fastapi import FastAPI, HTTPException
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -141,3 +142,5 @@ def redact(request: RedactRequest):
         request.text, entities, request.placeholder, 0.0, request.style
     )
     return {"redacted_text": redacted, "entities": entities}
+
+app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
