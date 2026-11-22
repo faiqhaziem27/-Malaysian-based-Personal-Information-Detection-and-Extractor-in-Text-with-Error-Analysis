@@ -143,4 +143,6 @@ def redact(request: RedactRequest):
     )
     return {"redacted_text": redacted, "entities": entities}
 
-app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
+
+# add the line below to opt for static-file mount instead of 
+# app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
