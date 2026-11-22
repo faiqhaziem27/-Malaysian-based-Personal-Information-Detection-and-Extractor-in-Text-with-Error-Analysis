@@ -10,7 +10,7 @@ Pre-trained Transformer models do not process raw word strings directly. They sp
 
 Instead of saving static tokenized IDs to disk, `src/tokenize_dataset.py` performs tokenization dynamically in memory using Hugging Face `AutoTokenizer`:
 
-- Default model checkpoint: `distilbert-base-cased`
+- Default model checkpoint: `distilbert-base-multilingual-cased`
 - Any compatible Hugging Face model checkpoint can be passed via `model_checkpoint` without reprocessing the underlying dataset on disk.
 
 ## 3. Subword Label Alignment Rules
@@ -88,14 +88,14 @@ python src/validate_tokenization.py
 | Special tokens | Sequence starts with `[CLS]` and ends with `[SEP]`, both labeled `-100` |
 | Label alignment | After removing `-100`, the remaining labels exactly match `ner_tags_3class` |
 
-### Validation Results (`distilbert-base-cased`)
+### Validation Results (`distilbert-base-multilingual-cased`)
 
 | Split | Samples | Max Tokens |
 |---|---:|---:|
-| Train | 14,041 | 173 |
-| Validation | 3,250 | 151 |
-| Test | 3,453 | 148 |
+| Train | 14,041 | 171 |
+| Validation | 3,250 | 141 |
+| Test | 3,453 | 146 |
 
-The longest training sequence is 173 tokens, well below the 512-token limit of DistilBERT. No CoNLL-2003 sample is truncated during training.
+The longest training sequence is 171 tokens, well below the 512-token limit of DistilBERT. No CoNLL-2003 sample is truncated during training.
 
 Long input documents (e.g., reports longer than 512 tokens) only need to be handled at prediction time.

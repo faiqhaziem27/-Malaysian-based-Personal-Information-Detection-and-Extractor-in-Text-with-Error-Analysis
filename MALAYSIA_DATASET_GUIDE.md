@@ -19,18 +19,18 @@ All samples are synthetic incident reports and customer support chat sentences c
 
 ## 3. Dataset Splits & Distribution
 
-| Split | Samples | `PER` Entities | `ORG` Entities | `LOC` Entities | Max Subword Tokens (`distilbert-base-cased`) |
+| Split | Samples | `PER` Entities | `ORG` Entities | `LOC` Entities | Max Subword Tokens (`distilbert-base-multilingual-cased`) |
 |---|---:|---:|---:|---:|---:|
-| Train | 70 | 67 | 62 | 65 | 38 |
-| Validation | 15 | 15 | 13 | 13 | 36 |
-| Test | 15 | 15 | 13 | 14 | 31 |
-| **Total** | **100** | **97** | **88** | **92** | **38** |
+| Train | 70 | 67 | 62 | 65 | 32 |
+| Validation | 15 | 15 | 13 | 13 | 31 |
+| Test | 15 | 15 | 13 | 14 | 29 |
+| **Total** | **100** | **97** | **88** | **92** | **32** |
 
 ### Training Split BIO Label Distribution
 
 | Label | ID | Count |
 |---|---:|---:|
-| `O` | 0 | 714 |
+| `O` | 0 | 715 |
 | `B-PER` | 1 | 67 |
 | `I-PER` | 2 | 121 |
 | `B-ORG` | 3 | 62 |
