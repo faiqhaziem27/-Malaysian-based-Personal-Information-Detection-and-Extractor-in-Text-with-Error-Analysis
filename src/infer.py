@@ -36,9 +36,7 @@ def load_ner_pipeline(model_dir=None):
     resolved = get_model_dir(model_dir)
 
     if not os.path.isdir(resolved):
-        raise FileNotFoundError(
-            f"Model folder '{resolved}' is a local folder, loading it from the Hugging Face Hub..."
-        )
+        print(f"'{resolved}' is not a local folder; loading it from the Hugging Face Hub.")
 
     return pipeline(
         "token-classification",
@@ -172,7 +170,7 @@ def print_table(entities):
         print(f"{e['entity']:<{width}} | {e['type']:<4} | {e['score']:<5} | {span}")
 
 
-def redact_text(text, entities, placeholder="[{type}]", min_score=0.0, style="mask"):
+def redact_text(text, entities, placeholder="[{type}]", min_score=0.0, style="label"):
     """
     Redact the text by replacing each entity with a placeholder.
 
@@ -221,7 +219,7 @@ def main():
     else:
         parser.error("Provide text or --file.")
 
-    entities = print_table(predict(text, args.model))
+    entities = predict(text, args.model)
     if args.redact:
         print(redact_text(text, entities, args.placeholder, args.min_score, args.style))
     else:

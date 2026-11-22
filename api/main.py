@@ -45,6 +45,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="NER Extraction API", lifespan=lifespan)
 
+# allow cross-origin-resource sharing 
 origins = [o.strip() for o in os.environ.get("CORS_ORIGINS", "*").split(",")]
 app.add_middleware(
     CORSMiddleware,
