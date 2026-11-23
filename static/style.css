@@ -1,0 +1,12 @@
+body { background-color: #f8f9fa; font-family: "Montserrat", Tahoma, sans-serif; }
+.card { border: 0; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, .05); margin-bottom: 24px; }
+.header-banner { background: linear-gradient(135deg, #1e3c72, #2a5298); color: white; margin-bottom: 24px; padding: 36px 24px; }
+.eyebrow { font-size: .75rem; font-weight: 700; letter-spacing: .15em; opacity: .8; }
+.workflow-steps { display: flex; gap: 8px; overflow-x: auto; }
+.workflow-steps span { background: #e9ecef; border-radius: 999px; color: #6c757d; font-size: .85rem; padding: 8px 14px; white-space: nowrap; }
+.workflow-steps .active { background: #dbeafe; color: #1d4ed8; }
+.editing-text { font-family: Consolas, monospace; line-height: 1.6; }
+.pipeline-list { list-style: none; padding-left: 0; }
+.pipeline-list li { border-left: 3px solid #dee2e6; margin-bottom: 12px; padding: 8px 12px; }
+.pipeline-list li.complete { border-left-color: #198754; color: #198754; }
+.pipeline-list li.complete::before { content: "✓ "; font-weight: 700; }
