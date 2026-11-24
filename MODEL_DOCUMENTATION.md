@@ -11,7 +11,7 @@
 
 ## 2. Model Configuration
 * **Pretrained Base Model:** `distilbert-base-multilingual-cased`
-* **Maximum Sequence Length:** `128` tokens
+* **Maximum Sequence Length:** `512` tokens
 * **Number of Labels (`num_labels`):** `7`
 * **Labels:** `O`, `B-PER`, `I-PER`, `B-ORG`, `I-ORG`, `B-LOC`, `I-LOC`
 
@@ -76,7 +76,7 @@ models/checkpoints/<run_name>/
 The model file is several hundred MB. If the zip was created from `models/checkpoints/<run_name>`, extracting it at the project root recreates this path. The folder you point the code at must be the one that has `config.json` directly inside it.
 
 **Alternatively, you can also install our latest model in the Hugging Face Hub by referencing the model's repository:"**
-- Model: "VeeJack/malaysian-ner-repository"
+- Model: "VeeJack/malaysian-ner-distilbert"
 
 
 ### Checking that the model loads

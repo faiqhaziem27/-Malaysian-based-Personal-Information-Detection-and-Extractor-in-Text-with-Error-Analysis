@@ -8,7 +8,7 @@ from src.label_config import LABEL2ID, ID2LABEL, NUM_LABELS
 class ModelConfig:
 
     # Model settings
-    pretrained_model_name: str = "VeeJack/malaysian-ner-distilbert" #using jack's HF model
+    pretrained_model_name: str = "distilbert-base-multilingual-cased"
     max_length: int = 512 # to match tokenizer
 
     # Label settings
