@@ -42,6 +42,8 @@ function hasReadableText(text) {
     return printableRatio > 0.85;
 }
 
+// it runs when a file has been read successfully
+// puts the extracted text into the main text area 
 function finishFileProcessing(extractedText, statusMessage) {
     text.value = extractedText;
     inputStatus.textContent = statusMessage;
@@ -59,6 +61,8 @@ function setActiveStep(step) {
     }
 }
 
+//it reads the input text and if there's any text then the NER pipeline section is shown
+//if its empty then an error message will be shown 
 extractButton.addEventListener('click', () => {
     if (fileProcessing) {
         inputStatus.textContent = 'Please wait while the selected file is being processed.';
@@ -74,6 +78,8 @@ extractButton.addEventListener('click', () => {
     }
 });
 
+// it clears the text area and file picker
+// it hides every section using bootstrap's d-none class 
 clearButton.addEventListener('click', () => {
     text.value = '';
     fileInput.value = '';
@@ -90,6 +96,7 @@ clearButton.addEventListener('click', () => {
     setActiveStep('input');
 });
 
+// it runs when the user selects a file
 fileInput.addEventListener('change', async () => {
     const file = fileInput.files[0];
 
@@ -150,7 +157,7 @@ fileInput.addEventListener('change', async () => {
 
             await page.render({ canvasContext: context, viewport: viewport }).promise;
 
-            const ocr = await Tesseract.recognize(canvas, 'eng', {
+            const ocr = await Tesseract.recognize(canvas, 'eng+msa', {
                 tessedit_pageseg_mode: '6'
             });
             text.value += ocr.data.text + '\n';
@@ -189,7 +196,7 @@ fileInput.addEventListener('change', async () => {
     else if (file.name.endsWith('.jpg') || file.name.endsWith('.jpeg') ||file.name.endsWith('.png')){
         inputStatus.textContent = 'Reading text from the image...';
         try {
-            const result = await Tesseract.recognize(file, 'eng', {
+            const result = await Tesseract.recognize(file, 'eng+msa', {
                 tessedit_pageseg_mode: '6'
             });
             finishFileProcessing(result.data.text, 'Image text is ready.');
